@@ -19,7 +19,7 @@ sim.opts.MAQC = RNAseq.SimOptions.2grp(ngenes = 20000, p.DE=0.05,
 
 # Simulated data
 
-sim.data.Cheung <- simRNAseq(sim.opts.Cheung, n1=3, n2=3)
+sim.data.Cheung <- simRNAseq(sim.opts.Cheung, n1=10, n2=10)
 sim.data.Bottomly <- simRNAseq(sim.opts.Bottomly, n1=3, n2=3)
 sim.data.MAQC <- simRNAseq(sim.opts.MAQC, n1=3, n2=3)
 
@@ -51,17 +51,17 @@ library(magrittr)
 ### Prepare DESeq2 analysis and calculate the confusion matrix:
 
 # Create a data frame for the experimental design
-design <- data.frame(condition = as.factor(c(rep("Condition1", 3), rep("Condition2", 3))))
+design <- data.frame(condition = as.factor(c(rep("Condition1", 10), rep("Condition2", 10))))
 
 # Create DESeqDataSet objects
 # Assuming you have already loaded the necessary packages, generated the simulated count data 'sim.data.Cheung',
 # and created the experimental design 'design'
 
 # Create the DESeqDataSet object with the experimental design
-dds_Cheung <- DESeqDataSetFromMatrix(countData = sim.data.Cheung$counts, colData = design, design = ~ condition)
+dds_Cheung_mat <- DESeqDataSetFromMatrix(countData = sim.data.Cheung$counts, colData = design, design = ~ condition)
 
 # Run DESeq2 analysis
-dds_Cheung <- DESeq(dds_Cheung)
+dds_Cheung <- DESeq(dds_Cheung_mat)
 
 # Get DESeq2 results
 results_Cheung <- results(dds_Cheung)
@@ -69,6 +69,66 @@ results_Cheung <- results(dds_Cheung)
 str(results_Cheung)
 dim(results_Cheung)
 head(results_Cheung)
+
+# Checking the distribution of p-values
+
+hist(results_Cheung$padj)
+hist(results_Cheung$pvalue)
+
+sum(is.na(results_Cheung$pvalue))
+sum(is.na(results_Cheung$padj))
+# > sum(is.na(results_Cheung$pvalue))
+# [1] 15690
+# > sum(is.na(results_Cheung$padj))
+# [1] 16919
+
+# sum(results_Cheung$padj < 0.05, na.rm = T)
+# sum(results_Cheung$pvalue < 0.05, na.rm = T)
+# > sum(results_Cheung$padj < 0.05, na.rm = T)
+# [1] 91
+# > sum(results_Cheung$pvalue < 0.05, na.rm = T)
+# [1] 261
+
+?DESeq2::results
+
+names(results_Cheung)
+head(results_Cheung)
+
+summary(results_Cheung$stat)
+
+hist(results_Cheung$stat)
+
+sum(is.na(results_Cheung$stat))
+# > sum(is.na(results_Cheung$stat))
+# [1] 15653
+
+# The stat column in this case represents the Wald statistic, which is calculated as the log2 fold change divided by the standard error of the log2 fold change (lfcSE).
+# Mathematically, it is calculated as stat = log2FoldChange / lfcSE.
+
+### Now, let's calibrate the p-values using fdrtool
+
+# Using raw statistic values from DSS
+library(fdrtool)
+complete.results_Cheung <- na.omit(results_Cheung)
+out.results_Cheung <- fdrtool(complete.results_Cheung$stat, statistic = "normal", plot = FALSE)
+
+hist(out.results_Cheung$pval)
+hist(out.results_Cheung$lfdr)
+hist(out.results_Cheung$qval)
+
+sum(out.results_Cheung$lfdr < 0.05)
+sum(out.results_Cheung$qval < 0.05)
+
+sum(results_Cheung$padj < 0.05, na.rm = T)
+
+# > sum(out.results_Cheung$lfdr < 0.05)
+# [1] 83
+# > 
+#   > sum(results_Cheung$padj < 0.05, na.rm = T)
+# [1] 91
+
+
+
 
 results_Cheung$Gene_ID <- 1:20000
 
@@ -303,6 +363,13 @@ metrics_MAQC
 
 ################################################################################################
 
+### Creating the data frame
+
+metrics_Cheung_rounded <- round(metrics_Cheung, digits = 3)
+metrics_Bottomly_rounded <- round(metrics_Bottomly, digits = 3)
+metrics_MAQC_rounded <- round(metrics_MAQC, digits = 3)
+sim.results.DESeq2 <- data.frame(metrics_Cheung_rounded, metrics_Bottomly_rounded, metrics_MAQC_rounded)
+sim.results.DESeq2
 
 ################################################################################################
 
