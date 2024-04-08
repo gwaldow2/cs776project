@@ -7,6 +7,7 @@ library(ggplot2)
 #' @param group a factor object as the sample information, with the length = number of samples
 #' @param contrfml a string like "A-B" to make contrast between A and B
 #' @param p_thres a p value threshold for significance
+#' @param lfc_thres a log FC threshold for significance
 #' @param cutoff cutoff for filtering low expressed genes
 #' @param batch batch
 #' @param thres_type string "adjp" or "p", using adjusted p value or p value for significance
@@ -14,8 +15,8 @@ library(ggplot2)
 #' @return a list: 1. toptab: topTable for the result, 2. de_genes: DE gene names, 3 volcano_plot
 #' @export
 
-DE_limmavoom <- function(counts, group, contrfml, p_thres=0.05, cutoff=1, batch=NULL
-                         , thres_type="adjp", adj_method = "BH"){
+DE_limmavoom <- function(counts, group, contrfml, p_thres=0.05, lfc_thres=1, 
+                         cutoff=1, batch=NULL, thres_type="adjp", adj_method = "BH"){
   # 1. data input
   # Create DGEList object
   # gene_names <- rownames(counts)
@@ -58,6 +59,7 @@ DE_limmavoom <- function(counts, group, contrfml, p_thres=0.05, cutoff=1, batch=
   
   # Comparisons between groups (log fold-changes) are obtained as _contrasts_ of these fitted linear models:
   contr <- limma::makeContrasts(contrasts=contrfml, levels = colnames(coef(fit)))
+  print(contr)
   
   # Estimate contrast for each gene
   tmp <- contrasts.fit(fit, contr)
@@ -80,9 +82,11 @@ DE_limmavoom <- function(counts, group, contrfml, p_thres=0.05, cutoff=1, batch=
   # Filter significant genes
   if (thres_type == "adjp") {
     de_genes <- rownames(top.table)[top.table$adj.P.Val < p_thres]
+    significant_genes <- subset(top.table, adj.P.Val < p_thres & abs(logFC) > lfc_thres)
   }
   else if (thres_type == "p") {
     de_genes <- rownames(top.table)[top.table$P.Value < p_thres]
+    significant_genes <- subset(top.table, P.Value < p_thres & abs(logFC) > lfc_thres)
   }
   else {
     print(paste0("Wrong thres_type", thres_type, ". It should be adjp or p."))
@@ -90,8 +94,6 @@ DE_limmavoom <- function(counts, group, contrfml, p_thres=0.05, cutoff=1, batch=
   }
   
   # make volcano plot
-  significant_genes <- subset(top.table, adj.P.Val < p_thres)
-  
   volcano_plot <- volcano_plot <- ggplot(top.table, aes(x = logFC, y = -log10(adj.P.Val))) +
     geom_point(color = "black", alpha = 0.5) +
     geom_text(data = significant_genes, aes(label = genes), hjust = -0.1, vjust = -0.1, size = 3) + # Add text labels for significant genes
