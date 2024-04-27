@@ -7,8 +7,9 @@ date: "2024-04-05"
 ```{r}
 library(PROPER)
 library(limma)
-library(qvalue)
-library(fdrtool)
+library(ggplot2)
+#library(qvalue)
+#library(fdrtool)
 #library(DSS)
 #library(DESeq2) 
 source("limma-voom.R")
@@ -36,6 +37,30 @@ sim.data.MAQC <- simRNAseq(sim.opts.MAQC, n1=sample_size, n2=sample_size)
 ```
 
 ```{r}
+sim.data = sim.data.Cheung
+# Extract gene expression values for each condition
+condition1 <- sim.data$counts[, 1:3]
+condition2 <- sim.data$counts[, 4:6]
+
+# Calculate mean expression for each gene in each condition
+mean_expr_condition1 <- rowMeans(condition1)
+mean_expr_condition2 <- rowMeans(condition2)
+
+# Create scatter plot
+plot(mean_expr_condition1, mean_expr_condition2, 
+     xlab = "Mean expression in Condition 1", 
+     ylab = "Mean expression in Condition 2",
+     main = "Scatter Plot of Gene Expression in Two Conditions")
+
+# Add gene names
+text(mean_expr_condition1, mean_expr_condition2, cex = 0.7)
+
+# Add a diagonal line for reference
+abline(a = 0, b = 1, col = "red")
+```
+
+
+```{r}
 hist(sim.data.MAQC[["simOptions"]][["lfc"]], breaks=50)
 sum(abs(sim.data.MAQC[["simOptions"]][["lfc"]])<1)
 ```
@@ -47,8 +72,17 @@ sim.data = sim.data.Cheung
 #sim.data = sim.data.MAQC
 res <- DE_limmavoom(counts=sim.data$counts, group=as.factor(sim.data$designs),
                     contrfml = "group0 - group1", cutoff=1.0, thres_type="adjp",
-                    p_thres=0.05, lfc_thres=1, adj_method = "BH")
+                    p_thres=0.05, lfc_thres=0, adj_method = "BH")
+
+# res <- DE_limmavoom(counts=sim.data$counts, group=as.factor(sim.data$designs),
+#                     contrfml = "group0 - group1", cutoff=1.0, thres_type="adjp",
+#                     p_thres=0.05, lfc_thres=1, adj_method = "BH")
 ```
+```{r}
+res$volcano_plot
+```
+
+
 ```{r}
 cutoff = 0.1
 d0 <- DGEList(sim.data$counts)
@@ -67,11 +101,10 @@ res$toptable
 hist(res$toptable$P.Value, breaks=100, xlim=c(0.0, 1.0), ylim=c(0, 400))
 hist(res$toptable$adj.P.Val, breaks=100, xlim=c(0.0, 1.0), ylim=c(0, 400))
 ```
+
 ```{r}
 sum(res$toptable$P.Value < 0.05)
 ```
-
-
 
 ```{r}
 # complete.results_Cheung <- na.omit(results_Cheung)

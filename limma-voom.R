@@ -1,5 +1,5 @@
 library(edgeR)
-library(ggplot2)
+#library(ggplot2)
 
 #' Apply DE analysis using limma-voom
 #'
