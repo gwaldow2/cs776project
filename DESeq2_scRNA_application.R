@@ -56,6 +56,24 @@ data_sample <- ComBat(data, sample_id)
 unique(treatment)
 # 'NONE''ROT'
 
+unique(cell_type)
+# > unique(cell_type)
+# [1] "P_FPP"   "NB"      "FPP"     "Epen1"   "U_Neur1" "DA"      "U_Neur2" "Sert"    "Astro"   "Epen2"  
+# [11] "U_Neur3"
+
+unique(pool_id)
+# > unique(pool_id)
+# [1] "pool4" "pool5"
+
+unique(sample_id)
+# > unique(sample_id)
+# [1] "5245STDY7487301" "5245STDY7487302" "5245STDY7520697" "5245STDY7520698" "5245STDY7520699"
+# [6] "5245STDY7520700" "5245STDY7544154" "5245STDY7544155" "5245STDY7544156" "5245STDY7544157"
+# [11] "5245STDY7544158" "5245STDY7544159" "5245STDY7544160" "5245STDY7544161" "5245STDY7577237"
+# [16] "5245STDY7577238" "5245STDY7577239" "5245STDY7577240" "5245STDY7603454" "5245STDY7603455"
+# [21] "5245STDY7603456" "5245STDY7603457" "5245STDY7631339" "5245STDY7631340" "5245STDY7631341"
+# [26] "5245STDY7631342" "5245STDY7631343" "5245STDY7631344" "5245STDY7631345" "5245STDY7631346"
+
 min(data_pool[,which(time_point=="D52")])
 # -1.86106558705981
 
@@ -249,6 +267,7 @@ table(data$Significance)
 # Downregulated Not significant     Upregulated 
 # 645            1769             163 
 
+
 ### Volcano plot when padj (from DESeq2 output) was used
 
 # library(ggplot2)
@@ -337,6 +356,25 @@ dim(data_qval0.05)
 trt <- as.factor(treatment[which(time_point=="D52")])
 class(trt)
 # [1] "factor"
+
+cell_type_temp_data <- cell_type[which(time_point=="D52")]
+length(cell_type_temp_data)
+# [1] 7299
+
+table(cell_type_temp_data)
+# > table(cell_type_temp_data)
+# cell_type_temp_data
+# Astro      DA   Epen1   Epen2     FPP   P_FPP    Sert U_Neur1 U_Neur3 
+# 2937     434    1590      56    1085     720       9     425      43 
+
+# pseudo-bulk option:
+# 7299-434
+# DA: 434, mat dim: 5000*434
+# nonDA: 434, mat dim: 5000*434
+# 6865/434
+# Each bin has 15 cell types: average of expression for these random 15 cell types for each gene
+
+# Options: 1) equal bin operation, 2) pseudo bulk on sample ID, 3) downsampling
 
 table(trt)
 # > table(trt)
@@ -660,7 +698,513 @@ venn.plot <- venn.diagram(
 # Plot the Venn diagram
 grid.draw(venn.plot)
 
+######################################################
+
+### Heatmap of temp_data by DA cells and treatment group combination
+
+dim(temp_data)
+
+length(trt)
+table(trt)
+
+# > length(trt)
+# [1] 7299
+# > table(trt)
+# trt
+# NONE  ROT 
+# 3677 3622 
+
+length(is.DA)
+table(is.DA)
+# > length(is.DA)
+# [1] 7299
+# > table(is.DA)
+# is.DA
+# FALSE  TRUE 
+# 6865   434 
+
+
+# Install and load the gplots package if you haven't already
+install.packages("gplots")
+library(gplots)
+
+# Generate sample data (replace this with your actual data)
+# set.seed(123)
+# temp_data <- matrix(rpois(5000*7299, lambda = 10), nrow = 5000, ncol = 7299)
+# trt <- sample(c("NONE", "ROT"), size = 7299, replace = TRUE)
+# is.DA <- sample(c(FALSE, TRUE), size = 7299, replace = TRUE)
+# 
+# # Define group labels
+# group_labels <- ifelse(is.DA, "DA", "non-DA")  # Cell type labels
+# group_labels <- paste(group_labels, trt, sep = "-")  # Combination of cell type and treatment
+# 
+# # Create a data frame with the group labels as column names
+# colnames(temp_data) <- group_labels
+# 
+# # Convert row names to gene names (replace "genes" with your actual gene names)
+# rownames(temp_data) <- paste("gene", 1:5000, sep = "")
+# 
+# # Generate heatmap
+# heatmap.2(
+#   temp_data,
+#   Rowv = FALSE,
+#   Colv = FALSE,
+#   dendrogram = "none",
+#   scale = "row",  # Scale rows (genes)
+#   trace = "none",
+#   col = colorRampPalette(c("blue", "white", "red"))(100),  # Define heatmap colors
+#   key = TRUE,  # Include color key
+#   keysize = 1,  # Set size of color key
+#   margins = c(10, 10),  # Set margins around the heatmap
+#   main = "Heatmap of Gene Expression",
+#   xlab = "Samples",
+#   ylab = "Genes"
+# )
+
+# 
+# # Define group labels
+# group_labels <- ifelse(is.DA, "DA", "non-DA")  # Cell type labels
+# group_labels <- paste(group_labels, trt, sep = "-")  # Combination of cell type and treatment
+# 
+# # Create a data frame with the group labels as column names
+# colnames(temp_data) <- group_labels
+# 
+# # Convert row names to gene names (replace "genes" with your actual gene names)
+# rownames(temp_data) <- gene$index
+# 
+# # Generate heatmap
+# heatmap.2(
+#   temp_data,
+#   Rowv = FALSE,
+#   Colv = FALSE,
+#   dendrogram = "none",
+#   scale = "row",  # Scale rows (genes)
+#   trace = "none",
+#   col = colorRampPalette(c("blue", "white", "red"))(100),  # Define heatmap colors
+#   key = TRUE,  # Include color key
+#   keysize = 1,  # Set size of color key
+#   margins = c(10, 10),  # Set margins around the heatmap
+#   main = "Heatmap of Gene Expression",
+#   xlab = "Cells",
+#   ylab = "Genes"
+# )
+
+######################################################
+
+### Comparing results after downsampling non-DA cells
+
+# down_sample for non-DA 
+set.seed(1234)
+nonDA_down = sample(1:ncol(nonDA_temp_data), ncol(DA_temp_data))
+# data_nonDA <- data_nonDA[,nonDA_down]
+# meta_nonDA <- meta_nonDA[nonDA_down]
+# dim(data_nonDA)
+
+library(DESeq2)
+
+# # Convert count data to integers
+# temp_data <- round(temp_data)
+
+trt <- as.factor(treatment[which(time_point=="D52")])
+length(trt)
+# [1] 7299
+trt_nonDA <- as.factor(treatment[which(is.DA==F)])
+length(trt_nonDA)
+# [1] 6865
+trt_nonDA_down <- as.factor(treatment[nonDA_down])
+length(trt_nonDA_down)
+# [1] 434
+
+nonDA_temp_data_down <- nonDA_temp_data[,nonDA_down]
+dim(nonDA_temp_data_down)
+# [1] 5000  434
+
+# Create DESeqDataSet object
+dds_D52_nonDA_down <- DESeqDataSetFromMatrix(countData = nonDA_temp_data_down,
+                                        colData = data.frame(treatment = trt_nonDA_down),
+                                        design = ~ treatment)
+# converting counts to integer mode
+
+# # Preprocess data
+# dds_nonDA_down <- DESeq(dds_D52_nonDA_down)
+# # > dds_nonDA
+# # Error: object 'dds_nonDA' not found
+
+# Estimate size factors
+dds_D52_nonDA_down <- estimateSizeFactors(dds_D52_nonDA_down)
+
+# Estimate gene-wise dispersions using gene-wise estimates
+dds_D52_nonDA_down <- estimateDispersionsGeneEst(dds_D52_nonDA_down)
+
+# Set the gene-wise estimates as final estimates
+dispersions(dds_D52_nonDA_down) <- mcols(dds_D52_nonDA_down)$dispGeneEst
+
+# Continue with testing using nbinomWaldTest or nbinomLRT
+dds_D52_nonDA_down <- nbinomWaldTest(dds_D52_nonDA_down)
+
+# Perform differential expression analysis
+res_nonDA_down <- results(dds_D52_nonDA_down)
+dim(res_nonDA_down)
+# > dim(res_nonDA_down)
+# [1] 5000    6
+
+library(fdrtool)
+out.results_nonDA_down <- fdrtool(res_nonDA_down$stat, statistic = "normal", plot = FALSE)
+head(out.results_nonDA_down)
+
+res_nonDA_down$pval_fdrtool <- out.results_nonDA_down$pval # Note: this is still unadjusted p-value
+res_nonDA_down$qval_fdrtool <- out.results_nonDA_down$qval
+res_nonDA_down$lfdr_fdrtool <- out.results_nonDA_down$lfdr
+head(res_nonDA_down)
+dim(res_nonDA_down)
+
+sum(res_nonDA_down$pvalue < 0.05)
+sum(res_nonDA_down$padj < 0.05, na.rm = T)
+sum(res_nonDA_down$pval_fdrtool < 0.05)
+sum(res_nonDA_down$qval_fdrtool < 0.05)
+sum(res_nonDA_down$lfdr_fdrtool < 0.05)
+# > dim(res_nonDA_down)
+# [1] 5000    9
+# > sum(res_nonDA_down$pvalue < 0.05)
+# [1] 11
+# > sum(res_nonDA_down$padj < 0.05, na.rm = T)
+# [1] 0
+# > sum(res_nonDA_down$pval_fdrtool < 0.05)
+# [1] 865
+# > sum(res_nonDA_down$qval_fdrtool < 0.05)
+# [1] 459
+# > sum(res_nonDA_down$lfdr_fdrtool < 0.05)
+# [1] 281
+
+res_nonDA_down$log10qval_fdrtool <- -log10(res_nonDA_down$qval_fdrtool)
+
+res_nonDA_down$Significance <- ifelse(res_nonDA_down$qval_fdrtool < 0.05, ifelse(res_nonDA_down$log2FoldChange > 0, "Upregulated", "Downregulated"), "Not significant")
+
+table(res_nonDA_down$Significance)
+# > table(res_nonDA_down$Significance)
+# 
+# Downregulated Not significant     Upregulated 
+# 100            4541             359 
+
+res_nonDA_down$gene <- gene$index
+
+write.csv(res_nonDA_down, file="C:/Nabil Awan/Nabil_UW-Madison/SEMESTERS_Courses_TAships/Spring 2024/BMI CS 776/Spring 2024/Project/Single cell data/results_nonDA_down_DESeq2_fdrtool.csv", row.names = F)
+
+res_nonDA_qval0.05_down <- subset(res_nonDA_down, qval_fdrtool<0.05)
+write.csv(res_nonDA_qval0.05_down, file="C:/Nabil Awan/Nabil_UW-Madison/SEMESTERS_Courses_TAships/Spring 2024/BMI CS 776/Spring 2024/Project/Single cell data/results_nonDA_down_sig_genes_DESeq2_fdrtool.csv", row.names = F)
+dim(res_nonDA_qval0.05_down)
+# [1] 459  12
+
+# Volcano plot for non-DA cells
+
+library(ggplot2)
+
+# Create a volcano plot
+myvolcanoplot <- ggplot(data = res_nonDA_down, aes(x = log2FoldChange, y = log10qval_fdrtool, col = Significance)) +
+  geom_vline(xintercept = c(-0.6, 0.6), col = "gray", linetype = 'dashed') +
+  geom_hline(yintercept = -log10(0.05), col = "gray", linetype = 'dashed') +
+  geom_point(size = 2) +
+  scale_color_manual(values = c("blue", "grey", "red"),  # Change color order
+                     breaks = c("Downregulated", "Not significant", "Upregulated"),  # Specify order of colors
+                     labels = c("Downregulated (n=100)", "Not significant (n=4541)", "Upregulated (n=359)")) +  # Adjust labels
+  coord_cartesian(ylim = c(0, 15), xlim = c(-0.4, 0.4)) +
+  labs(color = 'Significance',
+       x = expression("log"[2]*" Fold Change"),
+       y = expression("-log"[10]*" q-value")) +
+  ggtitle('Volcano plot for non-DA cells (DESeq2, downsampled)') +
+  theme_minimal()
+
+print(myvolcanoplot)
+
+
+### Venn diagram
+
+library(VennDiagram)
+
+res_DA_qval0.05 <- read.csv("C:/Nabil Awan/Nabil_UW-Madison/SEMESTERS_Courses_TAships/Spring 2024/BMI CS 776/Spring 2024/Project/Single cell data/results_DA_sig_genes_DESeq2_fdrtool.csv", header = T)
+
+# Define the two vectors
+nonDA_genes <- res_nonDA_qval0.05_down$gene
+DA_genes <- res_DA_qval0.05$gene
+
+
+
+# Create the Venn diagram with smaller circles
+venn.plot <- venn.diagram(
+  x = list(nonDA = nonDA_genes, DA = DA_genes),
+  category.names = c("Non-DA cells", "DA cells"),
+  filename = NULL,
+  fill = c("blue", "red"),
+  alpha = 0.5,
+  cat.col = c("blue", "red"),
+  cat.fontface = "bold",
+  cat.fontfamily = "serif",
+  cat.cex = 1.5,
+  cex = 1.5,
+  fontfamily = "serif",
+  scaled = TRUE, # Set scaled to TRUE to make circles smaller
+  margin = 0.05 # Set margin between circles
+)
+
+# Plot the Venn diagram
+grid.draw(venn.plot)
+
 
 
 ######################################################
 
+### Comparison of number of DEGs
+
+# > sum(res_DA$pvalue < 0.05)
+# [1] 0
+# > sum(res_DA$padj < 0.05, na.rm = T)
+# [1] 0
+# > sum(res_DA$pval_fdrtool < 0.05)
+# [1] 788
+# > sum(res_DA$qval_fdrtool < 0.05)
+# [1] 331
+# > sum(res_DA$lfdr_fdrtool < 0.05)
+# [1] 179
+
+
+# > sum(res_nonDA$pvalue < 0.05)
+# [1] 183
+# > sum(res_nonDA$padj < 0.05, na.rm = T)
+# [1] 66
+# > sum(res_nonDA$pval_fdrtool < 0.05)
+# [1] 1044
+# > sum(res_nonDA$qval_fdrtool < 0.05)
+# [1] 741
+# > sum(res_nonDA$lfdr_fdrtool < 0.05)
+# [1] 539
+
+
+# > sum(res_nonDA_down$pvalue < 0.05)
+# [1] 11
+# > sum(res_nonDA_down$padj < 0.05, na.rm = T)
+# [1] 0
+# > sum(res_nonDA_down$pval_fdrtool < 0.05)
+# [1] 865
+# > sum(res_nonDA_down$qval_fdrtool < 0.05)
+# [1] 459
+# > sum(res_nonDA_down$lfdr_fdrtool < 0.05)
+# [1] 281
+
+######################################################
+
+### Using pseudo bulk data
+
+# a metadata dataframe for the variables that we are interested in
+meta = data.frame(sample_id=as.factor(sample_id), cell_type=as.factor(cell_type), time_point=as.factor(time_point), treatment=as.factor(treatment))
+meta
+
+# pseudobulk metadata with 200 bulks in total
+bulk_meta = unique(meta)
+bulk_meta
+
+# Aggregate counts by groups defined by bulk samples
+aggr_data <- aggregate(t(data_sample), by = list(meta$sample_id, meta$cell_type, meta$time_point, meta$treatment), FUN = mean)
+aggr_data = t(aggr_data[,-c(1:4)])
+aggr_data
+
+aggr_data_pos = aggr_data - min(aggr_data)
+data_pos = data_sample - min(data_sample)
+aggr_data_pos
+
+# change bulk metadata to characters for future use
+bulk_meta <- as.data.frame(lapply(bulk_meta, function(x) as.character(x)))
+bulk_meta
+
+aggr_data_pos = aggr_data - min(aggr_data)
+data_pos = data_sample - min(data_sample)
+aggr_data_pos
+
+# aggregated data
+data_DA <- aggr_data_pos[, which(bulk_meta$time_point=="D52" & bulk_meta$cell_type=="DA")]
+meta_DA <- bulk_meta[which(bulk_meta$time_point=="D52" & bulk_meta$cell_type=="DA"),]$treatment
+dim(data_DA)
+# > dim(data_DA)
+# [1] 5000   16
+data_nonDA <- aggr_data_pos[, which(bulk_meta$time_point=="D52" & bulk_meta$cell_type!="DA")]
+meta_nonDA <- bulk_meta[which(bulk_meta$time_point=="D52" & bulk_meta$cell_type!="DA"),]$treatment
+dim(data_nonDA)
+# > dim(data_nonDA)
+# [1] 5000  113
+
+# single cell data
+data_DA <- data_pos[,which(time_point=="D52" & cell_type=="DA")]
+meta_DA <- treatment[which(time_point=="D52" & cell_type=="DA")]
+dim(data_DA)
+# > dim(data_DA)
+# [1] 5000  434
+data_nonDA <- data_pos[,which(time_point=="D52" & cell_type!="DA")]
+meta_nonDA <- treatment[which(time_point=="D52" & cell_type!="DA")]
+dim(data_nonDA)
+# > dim(data_nonDA)
+# [1] 5000 6865
+
+# down_sample for non-DA 
+set.seed(1234)
+nonDA_down = sample(1:ncol(data_nonDA), ncol(data_DA))
+data_nonDA <- data_nonDA[,nonDA_down]
+meta_nonDA <- meta_nonDA[nonDA_down]
+dim(data_nonDA)
+
+library(DESeq2)
+
+# # Convert count data to integers
+# temp_data <- round(temp_data)
+
+# trt <- as.factor(treatment[which(time_point=="D52")])
+# length(trt)
+# # [1] 7299
+# trt_nonDA <- as.factor(treatment[which(is.DA==F)])
+# length(trt_nonDA)
+# # [1] 6865
+trt_nonDA_down <- as.factor(treatment[nonDA_down])
+length(trt_nonDA_down)
+# [1] 434
+
+trt_nonDA_bulk_down <- as.factor(meta_nonDA)
+length(trt_nonDA_bulk_down)
+# [1] 434
+
+dim(data_nonDA)
+
+nonDA_temp_data_down <- nonDA_temp_data[,nonDA_down]
+dim(nonDA_temp_data_down)
+# [1] 5000  434
+
+data_nonDA <- round(data_nonDA)
+
+# Create DESeqDataSet object
+dds_D52_nonDA_bulk_down <- DESeqDataSetFromMatrix(countData = data_nonDA,
+                                             colData = data.frame(treatment = trt_nonDA_bulk_down),
+                                             design = ~ treatment)
+# converting counts to integer mode
+
+# # Preprocess data
+# dds_nonDA_down <- DESeq(dds_D52_nonDA_down)
+# # > dds_nonDA
+# # Error: object 'dds_nonDA' not found
+
+# Estimate size factors
+dds_D52_nonDA_bulk_down <- estimateSizeFactors(dds_D52_nonDA_bulk_down)
+
+# Estimate gene-wise dispersions using gene-wise estimates
+dds_D52_nonDA_bulk_down <- estimateDispersionsGeneEst(dds_D52_nonDA_bulk_down)
+
+# Set the gene-wise estimates as final estimates
+dispersions(dds_D52_nonDA_bulk_down) <- mcols(dds_D52_nonDA_bulk_down)$dispGeneEst
+
+# Continue with testing using nbinomWaldTest or nbinomLRT
+dds_D52_nonDA_bulk_down <- nbinomWaldTest(dds_D52_nonDA_bulk_down)
+
+# Perform differential expression analysis
+res_nonDA_bulk_down <- results(dds_D52_nonDA_bulk_down)
+dim(res_nonDA_bulk_down)
+# > dim(res_nonDA_down)
+# [1] 5000    6
+
+library(fdrtool)
+out.results_nonDA_bulk_down <- fdrtool(res_nonDA_bulk_down$stat, statistic = "normal", plot = FALSE)
+head(out.results_nonDA_bulk_down)
+
+res_nonDA_bulk_down$pval_fdrtool <- out.results_nonDA_bulk_down$pval # Note: this is still unadjusted p-value
+res_nonDA_bulk_down$qval_fdrtool <- out.results_nonDA_bulk_down$qval
+res_nonDA_bulk_down$lfdr_fdrtool <- out.results_nonDA_bulk_down$lfdr
+head(res_nonDA_bulk_down)
+dim(res_nonDA_bulk_down)
+
+sum(res_nonDA_bulk_down$pvalue < 0.05)
+sum(res_nonDA_bulk_down$padj < 0.05, na.rm = T)
+sum(res_nonDA_bulk_down$pval_fdrtool < 0.05)
+sum(res_nonDA_bulk_down$qval_fdrtool < 0.05)
+sum(res_nonDA_bulk_down$lfdr_fdrtool < 0.05)
+# > sum(res_nonDA_bulk_down$pvalue < 0.05)
+# [1] 2
+# > sum(res_nonDA_bulk_down$padj < 0.05, na.rm = T)
+# [1] 0
+# > sum(res_nonDA_bulk_down$pval_fdrtool < 0.05)
+# [1] 960
+# > sum(res_nonDA_bulk_down$qval_fdrtool < 0.05)
+# [1] 543
+# > sum(res_nonDA_bulk_down$lfdr_fdrtool < 0.05)
+# [1] 338
+
+res_nonDA_bulk_down$log10qval_fdrtool <- -log10(res_nonDA_bulk_down$qval_fdrtool)
+
+res_nonDA_bulk_down$Significance <- ifelse(res_nonDA_bulk_down$qval_fdrtool < 0.05, ifelse(res_nonDA_bulk_down$log2FoldChange > 0, "Upregulated", "Downregulated"), "Not significant")
+
+table(res_nonDA_bulk_down$Significance)
+# > table(res_nonDA_bulk_down$Significance)
+# 
+# Downregulated Not significant     Upregulated 
+# 447            4457              96 
+
+res_nonDA_bulk_down$gene <- gene$index
+
+write.csv(res_nonDA_bulk_down, file="C:/Nabil Awan/Nabil_UW-Madison/SEMESTERS_Courses_TAships/Spring 2024/BMI CS 776/Spring 2024/Project/Single cell data/results_nonDA_bulk_down_DESeq2_fdrtool.csv", row.names = F)
+
+res_nonDA_qval0.05_bulk_down <- subset(res_nonDA_bulk_down, qval_fdrtool<0.05)
+write.csv(res_nonDA_qval0.05_bulk_down, file="C:/Nabil Awan/Nabil_UW-Madison/SEMESTERS_Courses_TAships/Spring 2024/BMI CS 776/Spring 2024/Project/Single cell data/results_nonDA_bulk_down_sig_genes_DESeq2_fdrtool.csv", row.names = F)
+dim(res_nonDA_qval0.05_bulk_down)
+# [1] 543  12
+
+# Volcano plot for non-DA cells
+
+library(ggplot2)
+
+# Create a volcano plot
+myvolcanoplot <- ggplot(data = res_nonDA_bulk_down, aes(x = log2FoldChange, y = log10qval_fdrtool, col = Significance)) +
+  geom_vline(xintercept = c(-0.6, 0.6), col = "gray", linetype = 'dashed') +
+  geom_hline(yintercept = -log10(0.05), col = "gray", linetype = 'dashed') +
+  geom_point(size = 2) +
+  scale_color_manual(values = c("blue", "grey", "red"),  # Change color order
+                     breaks = c("Downregulated", "Not significant", "Upregulated"),  # Specify order of colors
+                     labels = c("Downregulated (n=447)", "Not significant (n=4457)", "Upregulated (n=96)")) +  # Adjust labels
+  coord_cartesian(ylim = c(0, 15), xlim = c(-0.4, 0.4)) +
+  labs(color = 'Significance',
+       x = expression("log"[2]*" Fold Change"),
+       y = expression("-log"[10]*" q-value")) +
+  ggtitle('Volcano plot for non-DA cells (DESeq2, downsampled)') +
+  theme_minimal()
+
+print(myvolcanoplot)
+
+
+### Venn diagram
+
+library(VennDiagram)
+
+res_DA_qval0.05 <- read.csv("C:/Nabil Awan/Nabil_UW-Madison/SEMESTERS_Courses_TAships/Spring 2024/BMI CS 776/Spring 2024/Project/Single cell data/results_DA_sig_genes_DESeq2_fdrtool.csv", header = T)
+
+# Define the two vectors
+nonDA_genes <- res_nonDA_qval0.05_bulk_down$gene
+DA_genes <- res_DA_qval0.05$gene
+
+
+
+# Create the Venn diagram with smaller circles
+venn.plot <- venn.diagram(
+  x = list(nonDA = nonDA_genes, DA = DA_genes),
+  category.names = c("Non-DA cells", "DA cells"),
+  filename = NULL,
+  fill = c("blue", "red"),
+  alpha = 0.5,
+  cat.col = c("blue", "red"),
+  cat.fontface = "bold",
+  cat.fontfamily = "serif",
+  cat.cex = 1.5,
+  cex = 1.5,
+  fontfamily = "serif",
+  scaled = TRUE, # Set scaled to TRUE to make circles smaller
+  margin = 0.05 # Set margin between circles
+)
+
+# Plot the Venn diagram
+grid.draw(venn.plot)
+
+
+
+######################################################
